@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Malla Curricular de Enfermería</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Malla Curricular - Enfermería</title>
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
-      background-color: #f4f9fc;
+      background-color: #f0f4f8;
       color: #333;
       margin: 0;
       padding: 2rem;
@@ -19,36 +19,33 @@
     .grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 1.5rem;
+      gap: 2rem;
     }
     .year {
       background: #fff;
-      border-radius: 10px;
       padding: 1rem;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
-    .semester, .annual {
-      margin-bottom: 1rem;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
     }
     h2, h3 {
       text-align: center;
-      color: #2b5d7d;
+      color: #005a87;
     }
     .subject {
-      background-color: #dceefc;
-      padding: 0.5rem;
-      margin: 0.3rem 0;
+      margin: 0.4rem 0;
+      padding: 0.6rem;
       border-radius: 5px;
+      background: #d0eaff;
       cursor: pointer;
       position: relative;
       transition: background-color 0.3s;
     }
     .subject.completed {
-      background-color: #c8e6c9;
+      background: #c2f0c2;
       text-decoration: line-through;
     }
     .subject.locked {
-      background-color: #f8d7da;
+      background: #f7c6c6;
       cursor: not-allowed;
     }
     .subject.locked::after {
@@ -56,14 +53,14 @@
       position: absolute;
       top: 100%;
       left: 0;
-      background-color: #444;
-      color: white;
-      font-size: 0.75rem;
+      background: #222;
+      color: #fff;
       padding: 0.4rem;
+      font-size: 0.75rem;
       border-radius: 5px;
       white-space: pre-line;
       display: none;
-      z-index: 2;
+      z-index: 10;
     }
     .subject.locked:hover::after {
       display: block;
@@ -71,10 +68,10 @@
   </style>
 </head>
 <body>
-  <h1>Malla Curricular de Enfermería</h1>
+  <h1>Malla Curricular - Técnico Superior en Enfermería</h1>
   <div class="grid" id="curriculum"></div>
   <script>
-    const data = {
+    const estructura = {
       "Primer Año": {
         "Primer Semestre": ["salud pública", "bioquímica", "biofísica", "estado y sociedad"],
         "Segundo Semestre": ["des. local y planif. estratégica", "epidemiologia y bioestadística", "aspec. psico-socio y cult. del des."],
@@ -106,35 +103,41 @@
 
     const completadas = JSON.parse(localStorage.getItem('completadas') || '[]');
 
-    function guardarProgreso() {
+    function guardar() {
       localStorage.setItem('completadas', JSON.stringify(completadas));
     }
 
     function crearMateria(nombre) {
       const div = document.createElement('div');
-      div.textContent = nombre;
       div.className = 'subject';
+      div.textContent = nombre;
 
       const requisitosMateria = requisitos[nombre];
-      const materiasPrimerAnio = Object.values(data['Primer Año']).flat();
-      const tercerAnioMaterias = Object.values(data['Tercer Año']).flat();
+      const materiasPrimerAnio = Object.values(estructura['Primer Año']).flat();
+      const materiasTercerAnio = Object.values(estructura['Tercer Año']).flat();
 
-      const debeEstarBloqueada = (requisitosMateria && !requisitosMateria.every(r => completadas.includes(r))) ||
-        (tercerAnioMaterias.includes(nombre) && !materiasPrimerAnio.every(r => completadas.includes(r)));
+      const bloqueada = (requisitosMateria && !requisitosMateria.every(r => completadas.includes(r))) ||
+        (materiasTercerAnio.includes(nombre) && !materiasPrimerAnio.every(r => completadas.includes(r)));
 
       if (completadas.includes(nombre)) {
         div.classList.add('completed');
-      } else if (debeEstarBloqueada) {
+      }
+      if (bloqueada) {
         div.classList.add('locked');
-        const faltantes = requisitosMateria?.filter(r => !completadas.includes(r)) || [];
-        if (tercerAnioMaterias.includes(nombre) && !materiasPrimerAnio.every(r => completadas.includes(r))) {
-          faltantes.unshift('Todas las materias del Primer Año');
+        const faltan = requisitosMateria?.filter(r => !completadas.includes(r)) || [];
+        if (materiasTercerAnio.includes(nombre) && !materiasPrimerAnio.every(r => completadas.includes(r))) {
+          faltan.unshift("Todas las materias del Primer Año");
         }
-        div.dataset.tooltip = 'Faltan: ' + faltantes.join(', ');
+        div.dataset.tooltip = 'Faltan: ' + faltan.join(', ');
       } else {
         div.addEventListener('click', () => {
-          completadas.push(nombre);
-          guardarProgreso();
+          const index = completadas.indexOf(nombre);
+          if (index >= 0) {
+            completadas.splice(index, 1);
+          } else {
+            completadas.push(nombre);
+          }
+          guardar();
           location.reload();
         });
       }
@@ -142,22 +145,20 @@
     }
 
     const contenedor = document.getElementById('curriculum');
-    Object.entries(data).forEach(([anio, bloques]) => {
+    Object.entries(estructura).forEach(([anio, bloques]) => {
       const columna = document.createElement('div');
       columna.className = 'year';
-      const h2 = document.createElement('h2');
-      h2.textContent = anio;
-      columna.appendChild(h2);
+      const titulo = document.createElement('h2');
+      titulo.textContent = anio;
+      columna.appendChild(titulo);
 
-      Object.entries(bloques).forEach(([etiqueta, materias]) => {
-        const bloque = document.createElement('div');
-        bloque.className = etiqueta.toLowerCase().includes('anual') ? 'annual' : 'semester';
-        const h3 = document.createElement('h3');
-        h3.textContent = etiqueta;
-        bloque.appendChild(h3);
-        materias.forEach(materia => bloque.appendChild(crearMateria(materia)));
-        columna.appendChild(bloque);
+      Object.entries(bloques).forEach(([bloque, materias]) => {
+        const subtitulo = document.createElement('h3');
+        subtitulo.textContent = bloque;
+        columna.appendChild(subtitulo);
+        materias.forEach(m => columna.appendChild(crearMateria(m)));
       });
+
       contenedor.appendChild(columna);
     });
   </script>
