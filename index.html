@@ -7,94 +7,104 @@
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
-      background-color: #f2f7f9;
+      background-color: #f4f9fc;
+      color: #333;
       margin: 0;
-      padding: 1rem;
+      padding: 2rem;
     }
     h1 {
       text-align: center;
+      margin-bottom: 2rem;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+    }
+    .year {
+      background: #fff;
+      border-radius: 10px;
+      padding: 1rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .semester, .annual {
       margin-bottom: 1rem;
     }
-    .malla {
-      display: grid;
-      grid-template-columns: repeat(6, 1fr);
-      gap: 1rem;
-      font-size: 0.9rem;
-    }
-    .columna {
-      background-color: #fff;
-      padding: 1rem;
-      border-radius: 8px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    }
-    .columna h3 {
+    h2, h3 {
       text-align: center;
-      border-bottom: 1px solid #ccc;
-      padding-bottom: 0.5rem;
+      color: #2b5d7d;
     }
-    .materia {
-      background-color: #e0f0ff;
+    .subject {
+      background-color: #dceefc;
+      padding: 0.5rem;
       margin: 0.3rem 0;
-      padding: 0.4rem;
       border-radius: 5px;
       cursor: pointer;
       position: relative;
+      transition: background-color 0.3s;
     }
-    .materia.completed {
+    .subject.completed {
       background-color: #c8e6c9;
       text-decoration: line-through;
     }
-    .materia.locked {
+    .subject.locked {
       background-color: #f8d7da;
       cursor: not-allowed;
     }
-    .materia.locked::after {
+    .subject.locked::after {
       content: attr(data-tooltip);
       position: absolute;
       top: 100%;
       left: 0;
-      background-color: #333;
-      color: #fff;
+      background-color: #444;
+      color: white;
       font-size: 0.75rem;
-      padding: 0.3rem;
+      padding: 0.4rem;
       border-radius: 5px;
       white-space: pre-line;
       display: none;
-      z-index: 1;
+      z-index: 2;
     }
-    .materia.locked:hover::after {
+    .subject.locked:hover::after {
       display: block;
     }
   </style>
 </head>
 <body>
   <h1>Malla Curricular de Enfermería</h1>
-  <div class="malla" id="malla"></div>
+  <div class="grid" id="curriculum"></div>
   <script>
-    const materiasPorColumna = {
-      "1 SEMESTRE": ["SALUD PÚBLICA", "BIOQUÍMICA", "BIOFÍSICA", "ESTADO Y SOCIEDAD"],
-      "2 SEMESTRE": ["DES. LOCAL Y PLANIF. ESTRATÉGICA", "EPIDEMIOLOGÍA Y BIOESTADÍSTICA", "ASPEC. PSICO-SOCIO CULT. DEL DES."],
-      "ANUALES": ["ANATOMÍA Y FISIOLOGÍA", "NUEVAS TECN. DE LA INF. Y COM.", "CUIDADOS DE ENFERMERÍA", "PRÁCTICA PROFESIONAL I"],
-      "3 SEMESTRE": ["PSICOLOGÍA SOCIAL E INSTIT.", "MICROB. PARASIT. E INMUNOLÓG.", "MÉTOD. DE LA INVESTIGACIÓN", "NUTRICIÓN Y DIETOTERAPIA"],
-      "4 SEMESTRE": ["COMUNICACIÓN", "ENF. SALUD MENTAL Y PSIQUIÁTRICA", "ENFERMERÍA DEL ADULTO MAYOR"],
-      "5 SEMESTRE": ["FARMACOLOGÍA", "ENFERMERÍA DEL ADULTO", "PRÁCTICA PROFESIONAL II"],
-      "6 SEMESTRE": ["ÉTICA Y LEGISL. PROFESIONAL", "CUID. CRÍTICOS Y EMERGENTOLOGÍA", "LENGUA EXTRANJERA APLICADA", "ED. PARA LA SALUD EN ENFERMERÍA", "ORG. GEST. Y ADM. DE LOS SERVICIOS ENF.", "ENFER. MATERNO-INFANTO-JUVENIL", "PRÁCTICA PROFESIONAL III"]
+    const data = {
+      "Primer Año": {
+        "Primer Semestre": ["salud pública", "bioquímica", "biofísica", "estado y sociedad"],
+        "Segundo Semestre": ["des. local y planif. estratégica", "epidemiologia y bioestadística", "aspec. psico-socio y cult. del des."],
+        "Anuales": ["anatomía y fisiología", "nuevas tecn. de la inf. y com.", "cuidados de enfermería", "práctica profesional I"]
+      },
+      "Segundo Año": {
+        "Tercer Semestre": ["psicología social e instit.", "microb. parasit e inmulóg.", "métod. de la investigación", "nutrición y dietoterapia"],
+        "Cuarto Semestre": ["comunicación", "enf. salud mental y psiquiátrica", "enfermería del adulto mayor"],
+        "Anuales": ["farmacología", "enfermería del adulto", "práctica profesional II"]
+      },
+      "Tercer Año": {
+        "Quinto Semestre": ["ética y legisl. profesional"],
+        "Sexto Semestre": ["cuid. críticos y emergentología"],
+        "Anuales": ["lengua extranjera aplicada", "ed. para la salud en enfermería", "org. gest. y adm. de los servicios enf.", "enfer. materno-infanto-juvenil", "práctica profesional III"]
+      }
     };
 
     const requisitos = {
-      "FARMACOLOGÍA": ["BIOQUÍMICA", "BIOFÍSICA"],
-      "ENFERMERÍA DEL ADULTO": ["ANATOMÍA Y FISIOLOGÍA", "CUIDADOS DE ENFERMERÍA", "PRÁCTICA PROFESIONAL I", "ASPEC. PSICO-SOCIO CULT. DEL DES."],
-      "PRÁCTICA PROFESIONAL II": ["ANATOMÍA Y FISIOLOGÍA", "CUIDADOS DE ENFERMERÍA", "PRÁCTICA PROFESIONAL I", "ASPEC. PSICO-SOCIO CULT. DEL DES.", "ENFERMERÍA DEL ADULTO", "ENFERMERÍA DEL ADULTO MAYOR"],
-      "MICROB. PARASIT. E INMUNOLÓG.": ["ANATOMÍA Y FISIOLOGÍA"],
-      "MÉTOD. DE LA INVESTIGACIÓN": ["NUEVAS TECN. DE LA INF. Y COM.", "EPIDEMIOLOGÍA Y BIOESTADÍSTICA"],
-      "ENF. SALUD MENTAL Y PSIQUIÁTRICA": ["ANATOMÍA Y FISIOLOGÍA", "CUIDADOS DE ENFERMERÍA", "PRÁCTICA PROFESIONAL I", "ASPEC. PSICO-SOCIO CULT. DEL DES.", "NUTRICIÓN Y DIETOTERAPIA"],
-      "ENFERMERÍA DEL ADULTO MAYOR": ["ANATOMÍA Y FISIOLOGÍA", "CUIDADOS DE ENFERMERÍA", "PRÁCTICA PROFESIONAL I", "ASPEC. PSICO-SOCIO CULT. DEL DES.", "NUTRICIÓN Y DIETOTERAPIA"],
-      "ENFER. MATERNO-INFANTO-JUVENIL": ["ANATOMÍA Y FISIOLOGÍA", "CUIDADOS DE ENFERMERÍA", "PRÁCTICA PROFESIONAL I", "ASPEC. PSICO-SOCIO CULT. DEL DES.", "ENFERMERÍA DEL ADULTO", "PRÁCTICA PROFESIONAL II", "NUTRICIÓN Y DIETOTERAPIA", "ENFERMERÍA DEL ADULTO MAYOR"],
-      "PRÁCTICA PROFESIONAL III": ["ANATOMÍA Y FISIOLOGÍA", "CUIDADOS DE ENFERMERÍA", "PRÁCTICA PROFESIONAL I", "ASPEC. PSICO-SOCIO CULT. DEL DES.", "ENFERMERÍA DEL ADULTO", "PRÁCTICA PROFESIONAL II", "NUTRICIÓN Y DIETOTERAPIA", "ENFERMERÍA DEL ADULTO MAYOR"]
+      "farmacología": ["bioquímica", "biofísica"],
+      "enfermería del adulto": ["anatomía y fisiología", "cuidados de enfermería", "práctica profesional I", "aspec. psico-socio y cult. del des."],
+      "práctica profesional II": ["anatomía y fisiología", "cuidados de enfermería", "práctica profesional I", "aspec. psico-socio y cult. del des.", "enfermería del adulto", "enfermería del adulto mayor"],
+      "microb. parasit e inmulóg.": ["anatomía y fisiología"],
+      "métod. de la investigación": ["nuevas tecn. de la inf. y com.", "epidemiologia y bioestadística"],
+      "enf. salud mental y psiquiátrica": ["anatomía y fisiología", "cuidados de enfermería", "práctica profesional I", "aspec. psico-socio y cult. del des.", "nutrición y dietoterapia"],
+      "enfermería del adulto mayor": ["anatomía y fisiología", "cuidados de enfermería", "práctica profesional I", "aspec. psico-socio y cult. del des.", "nutrición y dietoterapia"],
+      "enfer. materno-infanto-juvenil": ["anatomía y fisiología", "cuidados de enfermería", "práctica profesional I", "aspec. psico-socio y cult. del des.", "enfermería del adulto", "práctica profesional II", "nutrición y dietoterapia", "enfermería del adulto mayor"],
+      "práctica profesional III": ["anatomía y fisiología", "cuidados de enfermería", "práctica profesional I", "aspec. psico-socio y cult. del des.", "enfermería del adulto", "práctica profesional II", "nutrición y dietoterapia", "enfermería del adulto mayor"]
     };
 
     const completadas = JSON.parse(localStorage.getItem('completadas') || '[]');
-    const malla = document.getElementById('malla');
 
     function guardarProgreso() {
       localStorage.setItem('completadas', JSON.stringify(completadas));
@@ -102,21 +112,22 @@
 
     function crearMateria(nombre) {
       const div = document.createElement('div');
-      div.className = 'materia';
       div.textContent = nombre;
+      div.className = 'subject';
 
       const requisitosMateria = requisitos[nombre];
-      const tercerAnioMaterias = Object.values(materiasPorColumna).slice(0, 3).flat();
+      const materiasPrimerAnio = Object.values(data['Primer Año']).flat();
+      const tercerAnioMaterias = Object.values(data['Tercer Año']).flat();
 
-      const bloqueada = (requisitosMateria && !requisitosMateria.every(r => completadas.includes(r))) ||
-        (materiasPorColumna["6 SEMESTRE"].includes(nombre) && !tercerAnioMaterias.every(m => completadas.includes(m)));
+      const debeEstarBloqueada = (requisitosMateria && !requisitosMateria.every(r => completadas.includes(r))) ||
+        (tercerAnioMaterias.includes(nombre) && !materiasPrimerAnio.every(r => completadas.includes(r)));
 
       if (completadas.includes(nombre)) {
         div.classList.add('completed');
-      } else if (bloqueada) {
+      } else if (debeEstarBloqueada) {
         div.classList.add('locked');
         const faltantes = requisitosMateria?.filter(r => !completadas.includes(r)) || [];
-        if (materiasPorColumna["6 SEMESTRE"].includes(nombre) && !tercerAnioMaterias.every(m => completadas.includes(m))) {
+        if (tercerAnioMaterias.includes(nombre) && !materiasPrimerAnio.every(r => completadas.includes(r))) {
           faltantes.unshift('Todas las materias del Primer Año');
         }
         div.dataset.tooltip = 'Faltan: ' + faltantes.join(', ');
@@ -127,19 +138,28 @@
           location.reload();
         });
       }
-
       return div;
     }
 
-    for (const [columna, materias] of Object.entries(materiasPorColumna)) {
-      const div = document.createElement('div');
-      div.className = 'columna';
-      const h3 = document.createElement('h3');
-      h3.textContent = columna;
-      div.appendChild(h3);
-      materias.forEach(m => div.appendChild(crearMateria(m)));
-      malla.appendChild(div);
-    }
+    const contenedor = document.getElementById('curriculum');
+    Object.entries(data).forEach(([anio, bloques]) => {
+      const columna = document.createElement('div');
+      columna.className = 'year';
+      const h2 = document.createElement('h2');
+      h2.textContent = anio;
+      columna.appendChild(h2);
+
+      Object.entries(bloques).forEach(([etiqueta, materias]) => {
+        const bloque = document.createElement('div');
+        bloque.className = etiqueta.toLowerCase().includes('anual') ? 'annual' : 'semester';
+        const h3 = document.createElement('h3');
+        h3.textContent = etiqueta;
+        bloque.appendChild(h3);
+        materias.forEach(materia => bloque.appendChild(crearMateria(materia)));
+        columna.appendChild(bloque);
+      });
+      contenedor.appendChild(columna);
+    });
   </script>
 </body>
 </html>
